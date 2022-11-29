@@ -1,18 +1,9 @@
 %define WORK_BUF_SIZE 8192
 
-global fgets, puts, print, print_hex
+global fgets, print_hex
+extern print, puts, display_string
 
 section .text
-
-; void print(char *str, size_t len)
-print:
-  mov rdx, rsi  ; Move length into 3rd argument slot
-  mov rsi, rdi  ; Move string into 2nd argument slot
-  mov rdi, 1    ; Specify stdout
-  mov rax, 1    ; Write syscall code
-  syscall
-  ret
-
 ; void print_hex(uint64_t val)
 print_hex:
   push rbp
@@ -71,34 +62,7 @@ print_hex:
 
 
 ; int puts(const char *str)
-puts:
-  push rbp
-  mov rbp, rsp
 
-  mov rcx, 0                  ; int i = 0
-  
-  puts_loop:
-    cmp byte [rdi, rcx], 0    ; cmp str[i], 0
-    je puts_print             ; if (str[i] == '\0') { jmp puts_print; }
-    inc rcx                   ; i++
-    jmp puts_loop
-
-  puts_print:
-    mov rsi, rcx              ; print up to but not including the null byte
-    call print
-
-    mov r9, rdi               ; save str in r9
-    sub rsp, 1                ; make space for newline on stack
-    mov byte [rsp], 10        ; put '\n' in buffer
-    mov rdi, rsp              ; pass buffer to be printed
-    mov rsi, 1                ; print only 1 newline char
-    call print
-
-  mov rdi, r9                 ; restore str into first arg
-
-  mov rsp, rbp
-  pop rbp
-  ret
 
 
 ; char *fgets(char *buf, int n, int fd)
@@ -194,13 +158,16 @@ flush_stdin:
 ; double memory accesses for strings when we could just call sys_write with the
 ; pre-initialized buffer. As such, we use the simple approach of printing the
 ; template string and interrupting whenever we need to handle an escape char
+
+; Supported formats: 
+;   %s: null terminated string
 _printf:
   push rbp
   mov rbp, rsp
 
   sub rsp, WORK_BUF_SIZE
   mov rcx, 0                  ; int i = 0
-  mov rax, 0                  ; rdi + rax is the index of the next char to print
+  mov rax, 0                  ; rdi + rax is the index of the next unprinted char
   
   _printf_while_condition:
     mov dl, [rdi + rcx]
@@ -213,10 +180,13 @@ _printf:
     inc rcx
 
   _printf_identify_escape:
-    inc rcx
-    cmp dl 
+    inc rcx                   ; we entered this subroutine from a % so format is next char
+    cmp dl, 's'
+  ;   push 
+  ;   je display_string
 
   _printf_end:
     mov rsp, rbp
     pop rbp
     ret
+
