@@ -1,4 +1,4 @@
-%define WORK_BUF_SIZE 1024
+%define WORK_BUF_SIZE 8192
 
 global fgets, puts, print, print_hex
 
@@ -186,6 +186,37 @@ flush_stdin:
     je flush_stdin_done           ; if (buf[i] == '\n') { jmp flush_stdin_done; }
     call flush_stdin              ; else { recurse }
   flush_stdin_done:
+    mov rsp, rbp
+    pop rbp
+    ret
+
+; Copying to a new buffer to reduce system calls will result in having to do
+; double memory accesses for strings when we could just call sys_write with the
+; pre-initialized buffer. As such, we use the simple approach of printing the
+; template string and interrupting whenever we need to handle an escape char
+_printf:
+  push rbp
+  mov rbp, rsp
+
+  sub rsp, WORK_BUF_SIZE
+  mov rcx, 0                  ; int i = 0
+  mov rax, 0                  ; rdi + rax is the index of the next char to print
+  
+  _printf_while_condition:
+    mov dl, [rdi + rcx]
+    cmp dl, '%'
+    je _printf_identify_escape
+    cmp dl, 0
+    je _printf_end
+
+  _printf_loop:
+    inc rcx
+
+  _printf_identify_escape:
+    inc rcx
+    cmp dl 
+
+  _printf_end:
     mov rsp, rbp
     pop rbp
     ret
