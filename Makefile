@@ -30,7 +30,7 @@ MAIN=main
 # Compilation settings
 FORMAT=elf64
 CC=gcc
-CFLAGS=-nostartfiles -Wall -Werror -z noexecstack -g -nostdlib
+CFLAGS=-nostartfiles -Wall -Werror -z noexecstack -g -nostdlib -ffreestanding
 LDFLAGS=-z noexecstack
 
 WORKDIRS=$(BIN) $(BUILD) $(LIB) $(patsubst %, $(BUILD)/%, $(LIBS))

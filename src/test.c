@@ -33,4 +33,12 @@ int main(int argc, char **argv) {
   puts("Testing print_uint:");
   print("Strlen on a length 47 string (excluding null byte) returned: ", 62);
   print_uint(msg_len);
+
+  puts("Testing putc. Should see the lowercase alphabets in order");
+  char c = 'a';
+  for (int i = 0; i < 26; i++) {
+    putc(c + i);
+  }
+  putc((char)10);
+  return 0;
 }

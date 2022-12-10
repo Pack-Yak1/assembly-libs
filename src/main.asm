@@ -3,40 +3,45 @@ extern print_hex, fgets, puts, print, exit, prepare_uint
 
 section .text
 main:
+  push rbp
+  mov rbp, rsp
+
   sub rsp, 10
   mov r11, rsp
-  mov rdi, 12345
+  mov rdi, 0123006900
   mov rsi, rsp
   call prepare_uint
 
   mov rdi, rsi
   call puts
 
-  mov rdi, hello
-  mov rsi, hello_len
-  call print
+  ; mov rdi, hello
+  ; mov rsi, hello_len
+  ; call print
 
-  mov rdi, 0x1234567890abcdef
-  call print_hex
+  ; mov rdi, 0x1234567890abcdef
+  ; call print_hex
 
-  ; Print prompt for uint input
-  mov rdi, prompt
-  mov rsi, prompt_len
-  call print
+  ; ; Print prompt for uint input
+  ; mov rdi, prompt
+  ; mov rsi, prompt_len
+  ; call print
 
-  ; fgets into user_buffer
-  mov rdi, user_buffer
-  mov rsi, 11
-  mov rdx, 0
-  call fgets
+  ; ; fgets into user_buffer
+  ; mov rdi, user_buffer
+  ; mov rsi, 11
+  ; mov rdx, 0
+  ; call fgets
 
-  ; Print the contents of the user_buffer
-  mov rdi, user_buffer
-  call puts
+  ; ; Print the contents of the user_buffer
+  ; mov rdi, user_buffer
+  ; call puts
 
-  mov rdi, 0
-  call exit
+  mov rax, 0
 
+  mov rsp, rbp
+  pop rbp
+  ret
 
 section .data
 

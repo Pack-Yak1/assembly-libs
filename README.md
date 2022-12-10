@@ -23,5 +23,5 @@ the following assumptions
 
 Code will be tested in both assembly and C. To run the assembly test, simply run
 `make`. For the C tests, run `make test`. C files are compiled with gcc and the
-`-nostartfiles` flag to allow my implementations to be used in place of the
-standard libraries included by gcc.
+`-nostartfiles` and `-nostdlib` flags to allow my implementations to be used in
+place of the standard libraries included by gcc.
