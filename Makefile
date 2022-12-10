@@ -18,7 +18,7 @@ TESTFILE=$(SRC)/test.c
 MAIN=main
 
 # Files which the main assembly file depends on
-TEST_DEPS=print puts stdio stdlib
+TEST_DEPS=print puts stdio stdlib strlen print_uint
 
 # Files which the main c file depends on. C files will require a start file to
 # declare _start which calls main and exits the program after. 
@@ -33,7 +33,7 @@ LIBC_O=$(patsubst %, $(BUILD)/%.o, $(LIBC))
 # Compilation settings
 FORMAT=elf64
 CC=gcc
-CFLAGS=-nostartfiles -Wall -Werror -z noexecstack
+CFLAGS=-nostartfiles -Wall -Werror -z noexecstack -g -nostdlib
 LDFLAGS=-z noexecstack
 
 

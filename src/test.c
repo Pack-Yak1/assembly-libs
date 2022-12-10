@@ -24,4 +24,13 @@ int main(int argc, char **argv) {
   for (int i = 0; i < argc; i++) {
     puts(argv[i]);
   }
+
+  // Test strlen
+  char *msg = "If this message shows completely, strlen works\n";
+  size_t msg_len = strlen(msg);
+  print(msg, msg_len);
+
+  puts("Testing print_uint:");
+  print("Strlen on a length 47 string (excluding null byte) returned: ", 62);
+  print_uint(msg_len);
 }

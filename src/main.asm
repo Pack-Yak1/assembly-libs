@@ -1,8 +1,17 @@
 global _start
-extern print_hex, fgets, puts, print, exit
+extern print_hex, fgets, puts, print, exit, prepare_uint
 
 section .text
 _start:
+  sub rsp, 10
+  mov r11, rsp
+  mov rdi, 12345
+  mov rsi, rsp
+  call prepare_uint
+
+  mov rdi, rsi
+  call puts
+
   mov rdi, hello
   mov rsi, hello_len
   call print
@@ -27,6 +36,7 @@ _start:
 
   mov rdi, 0
   call exit
+
 
 section .data
 
