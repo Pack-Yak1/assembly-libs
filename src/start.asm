@@ -6,5 +6,5 @@ _start:
   mov rsi, rsp        ; rsi := pointer to first string argument
 
   call main
-  mov rdi, 0
+  mov rdi, rax        ; return value of main is exit code
   call exit
