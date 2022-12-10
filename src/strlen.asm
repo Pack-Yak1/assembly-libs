@@ -11,6 +11,5 @@ strlen:
     jne strlen_loop
 
   strlen_end:
-    inc rcx
     mov rax, rcx
     ret
