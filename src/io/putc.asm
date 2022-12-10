@@ -1,4 +1,5 @@
 global putc
+extern print
 
 section .text
 putc:

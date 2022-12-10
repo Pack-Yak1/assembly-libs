@@ -2,33 +2,30 @@ BIN=bin
 BUILD=build
 INC=include
 SRC=src
+LIB=lib
 
 # Define VERBOSE as an env variable if needed
 ifndef VERBOSE
 .SILENT:
 endif
 
-# The name of the static library generated
-LIBNAME=libmystd.a
+# Library names
+LIBS=std io string
+LIB_OBJS=$(patsubst $(SRC)/%.asm, $(BUILD)/%.o, $(wildcard $(patsubst %, $(SRC)/%/*, $(LIBS))))
+LIBNAMES=$(patsubst %, $(LIB)/lib%.a, $(LIBS))
+
+# Libraries which the test files depend on
+TEST_DEPS=$(LIBS)
+TEST_DEP_OBJS=$(patsubst $(SRC)/%.asm, $(BUILD)/%.o, $(wildcard $(patsubst %, $(SRC)/%/*, $(TEST_DEPS))))
+TEST_DEP_LIBNAMES=$(patsubst %, $(LIB)/lib%.a, $(TEST_DEPS))
 
 # The main c file to run
 TESTFILE=$(SRC)/test.c
-
-# The main assembly file to run
-MAIN=main
-
-# Files which the main assembly file depends on
-TEST_DEPS=print puts stdio stdlib strlen print_uint
-
-# Files which the main c file depends on. C files will require a start file to
-# declare _start which calls main and exits the program after. 
-LIBC=$(TEST_DEPS) start
-
 # These arguments will be passed to the test executable when run
 TEST_ARGS=abc def ghi
 
-TEST_DEPS_O=$(patsubst %, $(BUILD)/%.o, $(TEST_DEPS))
-LIBC_O=$(patsubst %, $(BUILD)/%.o, $(LIBC))
+# The main assembly file to run
+MAIN=main
 
 # Compilation settings
 FORMAT=elf64
@@ -36,27 +33,28 @@ CC=gcc
 CFLAGS=-nostartfiles -Wall -Werror -z noexecstack -g -nostdlib
 LDFLAGS=-z noexecstack
 
+WORKDIRS=$(BIN) $(BUILD) $(LIB) $(patsubst %, $(BUILD)/%, $(LIBS))
+TARGETS=$(join $(wildcard $(SRC)/*/*), $(wildcard $(SRC)/*))
 
-WORKDIRS=$(BIN) $(BUILD)
-TARGETS=$(patsubst $(SRC)/%.asm, %, $(wildcard $(SRC)/*))
-OBJECTS=$(patsubst %, $(BUILD)/%.o, $(TARGETS))
-BINARIES=$(patsubst %, $(BIN)/%, $(TARGETS))
+# Default behavior is to run the test assembly file
+run: install $(BIN)/main
+	./$(BIN)/main
 
-# Default behavior is to run the main assembly file
-run: install $(BIN)/$(MAIN)
-	./$(word 2, $^) $(TEST_ARGS)
+# Compile the test C file and run it
+test: install $(TESTFILE) $(TEST_DEP_LIBNAMES)
+	$(CC) $(CFLAGS) $(wordlist 2, $(words $^), $^) -o $(BIN)/test -I$(INC)
+	./$(BIN)/test $(TEST_ARGS)
 
 # Prepare the workspace directory structure
 install:
 	mkdir -p $(WORKDIRS)
 
-# Compile and run the test c file
-test: install $(TESTFILE) $(LIBC_O)
-	$(CC) $(CFLAGS) $(wordlist 2, $(words $^), $^) -o $(BIN)/test -I$(INC)
-	./$(BIN)/test $(TEST_ARGS)
+# General rule for making libraries
+$(LIB)/lib%.a: install $(LIB_OBJS)
+	ar rcs $@ $(patsubst $(LIB)/lib%.a, $(BUILD)/%/*, $@)
 
-# Create the static library
-lib: install $(OBJECTS)
+# Create all static libraries
+libs: install $(LIBNAMES)
 	ar rcs $(BUILD)/$(LIBNAME) $^
 
 # Create object files
@@ -64,7 +62,7 @@ $(BUILD)/%.o: $(SRC)/%.asm
 	nasm -f$(FORMAT) $< -o $@
 
 # Link and produce executables
-$(BIN)/%: $(BUILD)/%.o $(TEST_DEPS_O)
+$(BIN)/%: $(BUILD)/%.o $(TEST_DEP_LIBNAMES)
 	ld $(LDFLAGS) $^ -o $@
 
 # Clean all object files and executables

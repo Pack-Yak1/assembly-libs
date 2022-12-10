@@ -1,8 +1,8 @@
-global _start
+global main
 extern print_hex, fgets, puts, print, exit, prepare_uint
 
 section .text
-_start:
+main:
   sub rsp, 10
   mov r11, rsp
   mov rdi, 12345
