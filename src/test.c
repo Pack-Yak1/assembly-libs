@@ -1,4 +1,6 @@
-#include "stdlib.h"
+#include "io.h"
+#include "std.h"
+#include "string.h"
 
 int main(int argc, char **argv) {
   // Test print
