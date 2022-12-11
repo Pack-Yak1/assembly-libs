@@ -67,7 +67,7 @@ $(BIN)/%: $(BUILD)/%.o $(TEST_DEP_LIBNAMES)
 
 # Clean all object files and executables
 clean:
-	rm -rf $(BIN)/* $(BUILD)/* 
+	rm -rf $(BIN)/* $(BUILD)/* $(LIB)/*
 
 # Object files are useful, keep them
 .PRECIOUS: build/%.o
