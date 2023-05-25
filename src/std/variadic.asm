@@ -3,35 +3,54 @@ extern puts
 
 section .text
 
+; Memory layout of va_list_t:
+;   [ptr + 0 ] := index of argument to return
+;   [ptr + 8 ] := pointer to argument to return
+;   [ptr + 16] := pointer to argument 6 on the stack
+;   [ptr + 24] := number of required arguments
+
 ; Approach: Based on the number of required arguments, allocate space for
-; rsi-r9 arguments on the stack. Concrete type of va_list is a size_t indicating
+; rsi..r9 arguments on the stack. Concrete type of va_list is a size_t indicating
 ; the next argument to return (0-indexed, including required arguments), and
 ; a pointer to the start of the next argument, as well as a const pointer to
 ; the start of stack saved arguments (arguments 6 and onwards)
-; va_start(va_list_t *ptr, size_t num_req)
+; va_start(va_list_t *ptr)
 va_start:
-  cmp rsi, 1
+  push rbp
+  mov rbp, rsp
+
+  ; Write the start of the stack saved arguments
+  mov r10, [rbp + 8]        ; rbp points to previous rbp, above which are caller-saved args
+  mov qword [rdi + 16], r10 ; initialize ptr->base
+  
+  mov r10, [rdi + 24]       ; r10 := ptr->num_req
+  cmp r10, 1                ; Check if too few required arguments
   jl panic_insufficient_args
 
   ; Write index of next argument to return
-  lea rcx, [rsi + 1]
-  mov qword [rdi], rcx
+  mov qword [rdi], r10      ; ptr->next_index = 0-indexed index of next arg to return
 
-  ; Write the start of the stack saved arguments
-  mov rcx, [rbp + 8]        ; rbp contains previous rbp, followed by caller-saved args
-  mov qword [rdi + 16], rcx
+  
 
   ; Allocate space for register arguments
-  cmp rsi, 6      
-  setge rcx
-  setl rdx
-  imul r8, rcx, 6
-  imul r9, rdx, rsi
+  ; Needs 4 more registers, use r11 and 3 callee saved registers unused for args
+  push rbx
+  push r12
+  push r13
+
+  cmp r10, 6      
+  setge r11
+  setl r12
+  imul r8, r11, 6
+  imul r9, r12, r10
   add r8, r9          ; r8 := min(6, num_req)
 
   dec r8              ; r8--
   imul r9, r8, 8      ; r9 := r8 * 8
   sub rsp, r9         ; make space on stack for r8 qwords
+
+
+
   ; TODO: push the values to the newly allocated space, do NOT use push ops
 
   jge va_start_stack  ; If there were 6 or more required args, all optionals on stack
@@ -44,17 +63,16 @@ va_start:
     jg panic_too_many_req
     mov rcx, [rdi + 16]
     mov qword [rdi + 8], rcx
+
+  va_start_exit:
+    mov rsp, rbp
+    pop rbp
     ret
 
   
 
 ; va_arg(va_list_t *ptr, size_t arg_size)
 va_arg:
-  ; Memory layout of va_list_t:
-  ;   [ptr + 0 ] := index of argument to return
-  ;   [ptr + 8 ] := pointer to argument to return
-  ;   [ptr + 16] := pointer to argument 6 on the stack
-
   mov rcx, [rdi]            ; Get the index of the argument to return
   cmp rcx, 6
   jge va_next_stack_handler
